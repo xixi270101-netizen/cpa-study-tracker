@@ -470,6 +470,11 @@ body {
       <div class="task-list" id="taskList"></div>
     </div>
 
+    <div class="card" id="progressCard" style="padding:12px 16px;">
+      <div class="card-header" style="margin-bottom:8px;">📊 题目量进度</div>
+      <div style="font-size:13px;line-height:1.8;" id="progressContent"></div>
+    </div>
+
     <button class="checkin-btn" id="checkinBtn" disabled>✅ 今日打卡</button>
     <div class="quote" id="quote"></div>
   </main>
@@ -545,8 +550,8 @@ body {
       <div class="setting-group-title">默认模式</div>
       <div class="setting-row">
         <div>
-          <div class="setting-label">默认工作日模式</div>
-          <div class="setting-desc">每天首次打开时的默认选择</div>
+          <div class="setting-label">默认学习模式</div>
+          <div class="setting-desc">每天首次打开时的默认选择（周末也适用）</div>
         </div>
         <div class="toggle-row" style="width:140px; flex-shrink:0;" id="defaultModeToggle"></div>
       </div>
@@ -559,15 +564,6 @@ body {
       <button class="btn danger" id="resetData">🗑 清除所有打卡数据</button>
     </div>
 
-    <div class="setting-group">
-      <div class="setting-group-title">关于</div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">CPA 会计+税法 2026备考</div>
-          <div class="setting-desc">5月28日 – 8月22日 · 共87天</div>
-        </div>
-      </div>
-    </div>
     <div style="height:20px;"></div>
   </main>
 
@@ -602,38 +598,55 @@ const EXAM_DATE = new Date(2026,7,23); // Aug 23, 2026
 const START_DATE = '2026-05-28';
 
 const PHASES = [
-  { name:'阶段一 · 慢启动', end:'2026-06-13', book:'东奥轻二（只做好题）', tip:'先做章节练习，不追求正确率，错题全部标记',
+  { name:'阶段一 · 慢启动', end:'2026-06-13', tip:'先做章节练习，不追求正确率，错题全部标记',
     normal:[
-      {id:'accObj', icon:'📝', label:'会计客观题', n:15, detail:'单选+多选 · 轻二章节练习', time:'~30min'},
-      {id:'accSub', icon:'📐', label:'会计主观题', n:2, detail:'计算分析题 · 轻二本章对应', time:'~40min'},
-      {id:'taxObj', icon:'📋', label:'税法客观题', n:12, detail:'单选+多选 · 轻二章节练习', time:'~20min'},
-      {id:'taxSub', icon:'🧮', label:'税法主观题', n:1, detail:'计算问答 · 轻二本章对应', time:'~40min'}
+      {id:'accS', icon:'①', label:'会计单选', n:10, detail:'章节练习', time:'~15min'},
+      {id:'accM', icon:'②', label:'会计多选', n:5, detail:'章节练习', time:'~10min'},
+      {id:'accC', icon:'📐', label:'会计计算', n:1, detail:'章节对应计算题', time:'~20min'},
+      {id:'accZ', icon:'📊', label:'会计综合', n:1, detail:'章节对应综合题', time:'~20min'},
+      {id:'taxS', icon:'①', label:'税法单选', n:10, detail:'章节练习', time:'~12min'},
+      {id:'taxM', icon:'②', label:'税法多选', n:5, detail:'章节练习', time:'~8min'},
+      {id:'taxC', icon:'🧮', label:'税法计算', n:1, detail:'章节对应计算题', time:'~20min'},
+      {id:'taxZ', icon:'📊', label:'税法综合', n:1, detail:'章节对应综合题', time:'~15min'}
     ], overtime:[
-      {id:'accObj', icon:'📝', label:'会计客观题', n:10, detail:'单选+多选 · 轻二章节练习', time:'~20min'},
-      {id:'taxObj', icon:'📋', label:'税法客观题', n:8, detail:'单选+多选 · 轻二章节练习', time:'~15min'}
+      {id:'accS', icon:'①', label:'会计单选', n:8, detail:'章节练习', time:'~12min'},
+      {id:'accM', icon:'②', label:'会计多选', n:4, detail:'章节练习', time:'~8min'},
+      {id:'taxS', icon:'①', label:'税法单选', n:6, detail:'章节练习', time:'~8min'},
+      {id:'taxM', icon:'②', label:'税法多选', n:4, detail:'章节练习', time:'~6min'}
   ]},
-  { name:'阶段二 · 爬坡上量', end:'2026-07-11', book:'东奥轻二（只做好题）', tip:'税法必须动笔算，坑全在计算细节里，周末加套卷',
+  { name:'阶段二 · 爬坡上量', end:'2026-07-11', tip:'税法必须动笔算，坑全在计算细节里',
     normal:[
-      {id:'accObj', icon:'📝', label:'会计客观题', n:25, detail:'单选+多选 · 轻二重点章节', time:'~35min'},
-      {id:'accSub', icon:'📐', label:'会计主观题', n:3, detail:'计算+综合 · 轻二重点章节', time:'~40min'},
-      {id:'taxObj', icon:'📋', label:'税法客观题', n:20, detail:'单选+多选 · 轻二重点章节', time:'~25min'},
-      {id:'taxSub', icon:'🧮', label:'税法主观题', n:2, detail:'计算问答 · 轻二重点章节', time:'~40min'}
+      {id:'accS', icon:'①', label:'会计单选', n:15, detail:'重点章节强化', time:'~20min'},
+      {id:'accM', icon:'②', label:'会计多选', n:8, detail:'重点章节强化', time:'~15min'},
+      {id:'accC', icon:'📐', label:'会计计算', n:2, detail:'重点章节计算', time:'~25min'},
+      {id:'accZ', icon:'📊', label:'会计综合', n:1, detail:'重点章节综合', time:'~25min'},
+      {id:'taxS', icon:'①', label:'税法单选', n:12, detail:'重点章节强化', time:'~14min'},
+      {id:'taxM', icon:'②', label:'税法多选', n:6, detail:'重点章节强化', time:'~10min'},
+      {id:'taxC', icon:'🧮', label:'税法计算', n:2, detail:'重点章节计算', time:'~25min'},
+      {id:'taxZ', icon:'📊', label:'税法综合', n:1, detail:'重点章节综合', time:'~20min'}
     ], overtime:[
-      {id:'accObj', icon:'📝', label:'会计客观题', n:12, detail:'单选+多选 · 轻二章节练习', time:'~20min'},
-      {id:'taxObj', icon:'📋', label:'税法客观题', n:10, detail:'单选+多选 · 轻二章节练习', time:'~15min'}
+      {id:'accS', icon:'①', label:'会计单选', n:10, detail:'章节练习', time:'~14min'},
+      {id:'accM', icon:'②', label:'会计多选', n:5, detail:'章节练习', time:'~10min'},
+      {id:'taxS', icon:'①', label:'税法单选', n:8, detail:'章节练习', time:'~10min'},
+      {id:'taxM', icon:'②', label:'税法多选', n:5, detail:'章节练习', time:'~8min'}
   ]},
-  { name:'阶段三 · 真题轰炸', end:'2026-08-08', book:'近5年真题汇编 + 轻四最后六套题', tip:'真题逐题复盘，同考点连错两次→回去看教材原文',
+  { name:'阶段三 · 真题轰炸', end:'2026-08-08', tip:'真题逐题复盘，同考点连错两次→回去看教材原文',
     normal:[
-      {id:'accObj', icon:'📝', label:'会计客观题', n:30, detail:'真题+轻四 · 限时训练', time:'~35min'},
-      {id:'accSub', icon:'📐', label:'会计主观题', n:4, detail:'计算+综合 · 真题为主', time:'~50min'},
-      {id:'taxObj', icon:'📋', label:'税法客观题', n:25, detail:'真题+轻四 · 限时训练', time:'~30min'},
-      {id:'taxSub', icon:'🧮', label:'税法主观题', n:3, detail:'计算问答 · 真题为主', time:'~30min'}
+      {id:'accS', icon:'①', label:'会计单选', n:15, detail:'真题+模拟·限时', time:'~20min'},
+      {id:'accM', icon:'②', label:'会计多选', n:10, detail:'真题+模拟·限时', time:'~18min'},
+      {id:'accC', icon:'📐', label:'会计计算', n:2, detail:'真题为主', time:'~30min'},
+      {id:'accZ', icon:'📊', label:'会计综合', n:2, detail:'真题为主', time:'~30min'},
+      {id:'taxS', icon:'①', label:'税法单选', n:15, detail:'真题+模拟·限时', time:'~18min'},
+      {id:'taxM', icon:'②', label:'税法多选', n:8, detail:'真题+模拟·限时', time:'~12min'},
+      {id:'taxC', icon:'🧮', label:'税法计算', n:2, detail:'真题为主', time:'~25min'},
+      {id:'taxZ', icon:'📊', label:'税法综合', n:1, detail:'真题为主', time:'~20min'}
     ], overtime:[
-      {id:'accObj', icon:'📝', label:'会计客观题', n:15, detail:'单选+多选 · 真题/轻四', time:'~20min'},
-      {id:'accSub', icon:'📐', label:'会计主观题', n:1, detail:'综合题 · 真题', time:'~20min'},
-      {id:'taxObj', icon:'📋', label:'税法客观题', n:12, detail:'单选+多选 · 真题/轻四', time:'~15min'}
+      {id:'accS', icon:'①', label:'会计单选', n:12, detail:'真题/模拟', time:'~16min'},
+      {id:'accM', icon:'②', label:'会计多选', n:8, detail:'真题/模拟', time:'~14min'},
+      {id:'taxS', icon:'①', label:'税法单选', n:10, detail:'真题/模拟', time:'~12min'},
+      {id:'taxM', icon:'②', label:'税法多选', n:6, detail:'真题/模拟', time:'~10min'}
   ]},
-  { name:'阶段四 · 保温冲刺', end:'2026-08-22', book:'错题本 + 笔记 + 分录/公式清单', tip:'不再刷新题，回顾错题才是涨分，保持手感即可',
+  { name:'阶段四 · 保温冲刺', end:'2026-08-22', tip:'不再刷新题，回顾错题才是涨分，保持手感即可',
     normal:[
       {id:'accReview', icon:'🔄', label:'会计错题回顾', n:15, detail:'翻阅错题本+重做标记题', time:'~30min'},
       {id:'taxReview', icon:'🔄', label:'税法错题回顾', n:10, detail:'翻阅错题本+重做标记题', time:'~20min'},
@@ -731,14 +744,16 @@ function getTasksForDay(dateStr, workdayType) {
   if (isWeekend(dateStr)) {
     const d = dayOfWeek(dateStr);
     const phaseIdx = getPhase(dateStr);
-    const mockBook = phaseIdx >= 2 ? '轻四最后六套题' : '轻一章末综合测试';
-    return d===6 ? [
-      {id:'mockAcc', icon:'📄', label:'会计全真套卷', n:1, detail:'严格计时3小时 · '+mockBook, time:'3h'},
+    const mockSrc = phaseIdx >= 2 ? '模拟套卷' : '章末综合测试';
+    const isOT = workdayType === 'overtime';
+    const base = d===6 ? [
+      {id:'mockAcc', icon:'📄', label:'会计全真套卷', n:1, detail:'严格计时3小时 · '+mockSrc, time:'3h'},
       {id:'mockReview', icon:'🔍', label:'套卷逐题复盘', n:1, detail:'纠错时间≥考试时间 · 逐题分析', time:'≥3h'}
     ] : [
-      {id:'mockTax', icon:'📄', label:'税法全真套卷', n:1, detail:'严格计时2小时 · '+mockBook, time:'2h'},
+      {id:'mockTax', icon:'📄', label:'税法全真套卷', n:1, detail:'严格计时2小时 · '+mockSrc, time:'2h'},
       {id:'mockReview', icon:'🔍', label:'套卷逐题复盘', n:1, detail:'纠错时间≥考试时间 · 逐题分析', time:'≥2h'}
     ];
+    return isOT ? [base[0]] : base; // overtime on weekends = just the mock, skip review
   }
   const p = PHASES[getPhase(dateStr)];
   return workdayType==='overtime' ? p.overtime : p.normal;
@@ -914,7 +929,7 @@ function renderToday() {
   document.getElementById('chapterContent').innerHTML = `
     <div style="margin-bottom:6px;"><span style="color:var(--haze-600);font-weight:600;">会计：</span>${displayAcc}</div>
     <div style="margin-bottom:6px;"><span style="color:var(--haze-600);font-weight:600;">税法：</span>${displayTax}</div>
-    <div style="font-size:11px;color:var(--text-light);">📅 ${weekCh.s} → ${weekCh.e} &nbsp;|&nbsp; 📖 ${phaseInfo.book}</div>
+    <div style="font-size:11px;color:var(--text-light);">📅 ${weekCh.s} → ${weekCh.e}</div>
     <div style="font-size:11px;color:var(--haze-500);margin-top:3px;">💡 ${phaseInfo.tip}</div>
     ${customCh ? '<div style="font-size:10px;color:var(--warn);margin-top:4px;">⚠ 已自定义覆盖</div>' : ''}
   `;
@@ -928,14 +943,12 @@ function renderToday() {
   if (isWeekend(dateStr)) {
     modeBanner.className = 'mode-banner weekend';
     const dow = dayOfWeek(dateStr);
-    modeText.textContent = '周末 · ' + (dow===6?'会计全真套卷':'税法全真套卷');
-    document.getElementById('modeBanner').querySelector('.mode-icon').textContent = '📄';
+    modeText.textContent = (dow===6?'📄 会计全真套卷（3h）':'📄 税法全真套卷（2h）');
   } else {
-    modeBanner.className = 'mode-banner weekday';
     const ci = getCheckin(dateStr);
     const workType = ci ? ci.workdayType : getSettings().defaultMode;
-    modeText.textContent = '工作日 · ' + (workType==='overtime'?'加班保底模式':'正常章节刷题');
-    document.getElementById('modeBanner').querySelector('.mode-icon').textContent = '📚';
+    modeBanner.className = 'mode-banner weekday';
+    modeText.textContent = workType==='overtime'?'💼 加班模式 · 只刷客观题':'📚 正常模式 · 客观+主观全刷';
   }
 
   // Workday toggle (only for non-weekend)
@@ -943,12 +956,19 @@ function renderToday() {
   const taskCard = document.getElementById('taskCard');
   const checkinBtn = document.getElementById('checkinBtn');
 
+  const existingWT = getCheckin(dateStr);
+  const currentType = existingWT ? existingWT.workdayType : getSettings().defaultMode;
+
   if (isWeekend(dateStr)) {
-    workdayCard.style.display = 'none';
+    workdayCard.style.display = 'block';
+    const toggle = document.getElementById('workdayToggle');
+    const wkendLabel = dayOfWeek(dateStr)===6 ? '会计套卷' : '税法套卷';
+    toggle.innerHTML = `
+      <button class="toggle-btn ${currentType==='normal'?'active':''}" data-type="normal">📚 不加班 · 套卷+复盘</button>
+      <button class="toggle-btn overtime ${currentType==='overtime'?'active':''}" data-type="overtime">💼 加班 · 仅套卷</button>
+    `;
   } else {
     workdayCard.style.display = 'block';
-    const existing = getCheckin(dateStr);
-    const currentType = existing ? existing.workdayType : getSettings().defaultMode;
     const toggle = document.getElementById('workdayToggle');
     toggle.innerHTML = `
       <button class="toggle-btn ${currentType==='normal'?'active':''}" data-type="normal">📚 不加班 (${PHASES[phase].normal.reduce((s,t)=>s+t.n,0)}题)</button>
@@ -966,7 +986,6 @@ function renderToday() {
     workdayType = getSettings().defaultMode;
     tasksDone = {};
   }
-  if (isWeekend(dateStr)) workdayType = 'weekend';
 
   const tasks = getTasksForDay(dateStr, workdayType);
   const allDone = tasks.length>0 && tasks.every(t => tasksDone[t.id]);
@@ -986,6 +1005,38 @@ function renderToday() {
         <div class="task-check"></div>
       </div>`;
   }).join('');
+
+  // Progress tracking
+  const totalToday = tasks.reduce((s,t)=>s+(t.n||0), 0);
+  const doneToday = tasks.filter(t=>tasksDone[t.id]).reduce((s,t)=>s+(t.n||0), 0);
+  const phaseStartDate = phase===0 ? START_DATE : PHASES[phase-1].end;
+  let phaseTotalQ = 0, phaseDoneQ = 0;
+  for (let ds=phaseStartDate; ds<=PHASES[phase].end; ds=fmtDate(new Date(parseDate(ds).getTime()+86400000))) {
+    if (ds > dateStr) break;
+    const dayTasks = getTasksForDay(ds, isWeekend(ds)?'normal':((DATA.checkins[ds]&&DATA.checkins[ds].workdayType)||'normal'));
+    phaseTotalQ += dayTasks.reduce((s,t)=>s+(t.n||0),0);
+    if (DATA.checkins[ds] && DATA.checkins[ds].tasks) {
+      phaseDoneQ += dayTasks.filter(t=>DATA.checkins[ds].tasks[t.id]).reduce((s,t)=>s+(t.n||0),0);
+    }
+  }
+  let overallQ = 0;
+  DATA.checkedInDates.forEach(ds => {
+    const dt = getTasksForDay(ds, (DATA.checkins[ds]&&DATA.checkins[ds].workdayType)||'normal');
+    overallQ += dt.filter(t=>DATA.checkins[ds].tasks&&DATA.checkins[ds].tasks[t.id]).reduce((s,t)=>s+(t.n||0),0);
+  });
+  document.getElementById('progressContent').innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+      <span>📅 今日</span><span style="font-weight:700;">${doneToday}/${totalToday} 题</span>
+    </div>
+    <div class="progress-bar" style="height:5px;margin-bottom:8px;"><div class="progress-fill" style="width:${totalToday>0?Math.round(doneToday/totalToday*100):0}%"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+      <span>📆 ${PHASES[phase].name}</span><span style="font-weight:700;">${phaseDoneQ}/${phaseTotalQ} 题</span>
+    </div>
+    <div class="progress-bar" style="height:5px;margin-bottom:8px;"><div class="progress-fill" style="width:${phaseTotalQ>0?Math.round(phaseDoneQ/phaseTotalQ*100):0}%"></div></div>
+    <div style="display:flex;justify-content:space-between;">
+      <span>📊 累计总完成</span><span style="font-weight:700;color:var(--haze-700);">${overallQ} 题</span>
+    </div>
+  `;
 
   // Check-in button
   checkinBtn.textContent = isCheckedIn(dateStr) ? '✅ 已完成打卡' : '✅ 今日打卡';
@@ -1066,7 +1117,7 @@ function renderStats() {
       </div>
       <div class="phase-stat-detail" id="phaseDetail${i}">
         📊 完成率：${pct}% &nbsp;|&nbsp; 📅 剩余${remainDays}天<br>
-        📖 用书：${p.book}<br>
+        📋 总任务题量：${p.normal.reduce((s,t)=>s+(t.n||0),0)} 题/天（不加班模式）<br>
         💡 ${p.tip}
       </div>`;
   }).join('');
@@ -1235,9 +1286,7 @@ function bindEvents() {
     ci.workdayType = btn.dataset.type;
     saveCheckin(dateStr, ci.workdayType, ci.tasks, false);
     // Update mode banner
-    const modeText = document.getElementById('modeText');
-    modeText.textContent = '工作日 · ' + (btn.dataset.type==='overtime'?'加班保底模式':'正常章节刷题');
-    document.getElementById('modeBanner').querySelector('.mode-icon').textContent = btn.dataset.type==='overtime'?'💼':'📚';
+    document.getElementById('modeText').textContent = btn.dataset.type==='overtime'?'💼 加班模式 · 只刷客观题':'📚 正常模式 · 客观+主观全刷';
     renderToday();
   });
 
@@ -1276,7 +1325,6 @@ function bindEvents() {
     if (isCheckedIn(dateStr)) return;
     const taskId = item.dataset.taskId;
     const ci = getCheckin(dateStr) || { workdayType:getSettings().defaultMode, tasks:{}, checkedIn:false, ts:'' };
-    if (isWeekend(dateStr)) ci.workdayType = 'weekend';
     ci.tasks[taskId] = !ci.tasks[taskId];
     saveCheckin(dateStr, ci.workdayType, ci.tasks, false);
     renderToday();
@@ -1292,7 +1340,6 @@ function bindEvents() {
     if (!allDone) return;
 
     const ci = getCheckin(dateStr) || { workdayType:getSettings().defaultMode };
-    if (isWeekend(dateStr)) ci.workdayType = 'weekend';
     saveCheckin(dateStr, ci.workdayType, ci.tasks||tasksDone, true);
     spawnConfetti();
     const streak = calcStreak();
@@ -1323,7 +1370,7 @@ function bindEvents() {
     const tasks = getTasksForDay(ds, ci.workdayType);
     const doneNames = tasks.filter(t=>ci.tasks[t.id]).map(t=>t.label);
     document.getElementById('calDetail').innerHTML = '<b>'+ds+'</b> · '+
-      (ci.workdayType==='weekend'?'周末套卷':(ci.workdayType==='overtime'?'加班模式':'正常模式'))+
+      (ci.workdayType==='overtime'?'加班模式':'正常模式')+
       '<br>已完成：'+(doneNames.length>0?doneNames.join('、'):'无')+
       '<br><span style="font-size:11px;color:var(--text-light)">打卡时间：'+new Date(ci.ts).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+'</span>';
   });
