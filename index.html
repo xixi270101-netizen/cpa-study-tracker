@@ -279,6 +279,48 @@ body {
   background:var(--success); transition:width 0.3s;
 }
 
+/* ===== Chapter Edit ===== */
+.chapter-edit-btn {
+  background:none; border:none; font-size:16px; cursor:pointer;
+  padding:2px 8px; border-radius:6px; color:var(--text-light);
+  transition:all 0.15s; margin-left:auto;
+}
+.chapter-edit-btn:hover { background:var(--haze-100); color:var(--haze-600); }
+.chapter-edit-input {
+  width:100%; padding:10px 12px; border:1px solid var(--border);
+  border-radius:8px; font-size:13px; font-family:inherit; color:var(--text);
+  background:var(--haze-50); margin-bottom:8px; resize:none;
+}
+.chapter-edit-input:focus { outline:none; border-color:var(--haze-400); box-shadow:0 0 0 3px rgba(141,163,184,0.15); }
+.chapter-edit-actions { display:flex; gap:8px; }
+.chapter-edit-actions button {
+  flex:1; padding:8px; border-radius:8px; border:none; cursor:pointer;
+  font-size:13px; font-weight:600; font-family:inherit;
+}
+.btn-save-chapter { background:var(--haze-400); color:#fff; }
+.btn-cancel-chapter { background:var(--haze-100); color:var(--text-dim); }
+
+/* ===== Mode Banner ===== */
+.mode-banner {
+  padding:12px 16px; border-radius:var(--radius-sm); margin-bottom:12px;
+  display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600;
+}
+.mode-banner.weekday { background:var(--haze-50); color:var(--haze-700); border:1px solid var(--haze-200); }
+.mode-banner.weekend { background:var(--warn-bg); color:#8B6914; border:1px solid #e8d5b0; }
+.mode-banner .mode-icon { font-size:22px; }
+
+/* ===== Expandable Phase Stats ===== */
+.phase-stat { cursor:pointer; user-select:none; }
+.phase-stat-detail {
+  display:none; padding:12px 16px; margin-top:-4px; margin-bottom:6px;
+  background:var(--haze-50); border-radius:0 0 var(--radius-sm) var(--radius-sm);
+  font-size:13px; color:var(--text-dim); line-height:1.8;
+  border:1px solid var(--border); border-top:none;
+}
+.phase-stat-detail.open { display:block; }
+.phase-stat .expand-arrow { transition:transform 0.2s; }
+.phase-stat .expand-arrow.open { transform:rotate(180deg); }
+
 /* ===== Settings ===== */
 .setting-group { margin-bottom:20px; }
 .setting-group-title { font-size:12px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
@@ -403,8 +445,24 @@ body {
     </div>
 
     <div class="card" id="chapterCard" style="border-left:3px solid var(--haze-400);">
-      <div class="card-header">📖 本周章节</div>
+      <div class="card-header">
+        <span>📖 本周章节</span>
+        <button class="chapter-edit-btn" id="chapterEditBtn" title="自定义本周内容">✏️</button>
+      </div>
       <div id="chapterContent" style="font-size:13px;line-height:1.7;"></div>
+      <div id="chapterEdit" style="display:none;">
+        <input class="chapter-edit-input" id="editAcc" placeholder="会计章节，如：第6章 长投">
+        <input class="chapter-edit-input" id="editTax" placeholder="税法章节，如：第2章 增值税">
+        <div class="chapter-edit-actions">
+          <button class="btn-save-chapter" id="saveChapter">保存</button>
+          <button class="btn-cancel-chapter" id="cancelChapter">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mode-banner weekday" id="modeBanner">
+      <span class="mode-icon">📚</span>
+      <span id="modeText">工作日 · 章节刷题</span>
     </div>
 
     <div class="card" id="taskCard">
@@ -847,17 +905,40 @@ function renderToday() {
   document.getElementById('phaseDays').textContent = phaseDoneClamped+'/'+phaseTotal+' 天';
   document.getElementById('phaseBar').style.width = (phaseDoneClamped/phaseTotal*100)+'%';
 
-  // Weekly chapters
+  // Weekly chapters (support custom override)
   const weekCh = getCurrentWeekChapters(dateStr);
   const phaseInfo = PHASES[phase];
+  const customCh = (DATA.customChapters && DATA.customChapters[weekCh.s]) || null;
+  const displayAcc = customCh ? customCh.acc : weekCh.acc;
+  const displayTax = customCh ? customCh.tax : weekCh.tax;
   document.getElementById('chapterContent').innerHTML = `
-    <div style="margin-bottom:6px;"><span style="color:var(--haze-600);font-weight:600;">会计：</span>${weekCh.acc}</div>
-    <div style="margin-bottom:6px;"><span style="color:var(--haze-600);font-weight:600;">税法：</span>${weekCh.tax}</div>
+    <div style="margin-bottom:6px;"><span style="color:var(--haze-600);font-weight:600;">会计：</span>${displayAcc}</div>
+    <div style="margin-bottom:6px;"><span style="color:var(--haze-600);font-weight:600;">税法：</span>${displayTax}</div>
     <div style="font-size:11px;color:var(--text-light);">📅 ${weekCh.s} → ${weekCh.e} &nbsp;|&nbsp; 📖 ${phaseInfo.book}</div>
     <div style="font-size:11px;color:var(--haze-500);margin-top:3px;">💡 ${phaseInfo.tip}</div>
+    ${customCh ? '<div style="font-size:10px;color:var(--warn);margin-top:4px;">⚠ 已自定义覆盖</div>' : ''}
   `;
+  // Reset edit mode
+  document.getElementById('chapterEdit').style.display = 'none';
+  document.getElementById('chapterContent').style.display = 'block';
 
-  // Workday toggle (only for non-weekend, non-phase4)
+  // Mode banner
+  const modeBanner = document.getElementById('modeBanner');
+  const modeText = document.getElementById('modeText');
+  if (isWeekend(dateStr)) {
+    modeBanner.className = 'mode-banner weekend';
+    const dow = dayOfWeek(dateStr);
+    modeText.textContent = '周末 · ' + (dow===6?'会计全真套卷':'税法全真套卷');
+    document.getElementById('modeBanner').querySelector('.mode-icon').textContent = '📄';
+  } else {
+    modeBanner.className = 'mode-banner weekday';
+    const ci = getCheckin(dateStr);
+    const workType = ci ? ci.workdayType : getSettings().defaultMode;
+    modeText.textContent = '工作日 · ' + (workType==='overtime'?'加班保底模式':'正常章节刷题');
+    document.getElementById('modeBanner').querySelector('.mode-icon').textContent = '📚';
+  }
+
+  // Workday toggle (only for non-weekend)
   const workdayCard = document.getElementById('workdayCard');
   const taskCard = document.getElementById('taskCard');
   const checkinBtn = document.getElementById('checkinBtn');
@@ -965,6 +1046,8 @@ function renderStats() {
     const start = i===0 ? START_DATE : PHASES[i-1].end;
     const total = daysBetween(start, p.end)+1;
     const doneDays = DATA.checkedInDates.filter(ds => ds>=start && ds<=p.end).length;
+    const pct = Math.round(doneDays/total*100);
+    const remainDays = Math.max(0, total - doneDays);
     const isCurrent = now <= p.end && now >= start;
     const isPast = now > p.end;
     let cls, tagCls, tagText;
@@ -972,15 +1055,34 @@ function renderStats() {
     else if (isPast) { cls='past'; tagCls='past'; tagText='已完成'; }
     else { cls='future'; tagCls='future'; tagText='未开始'; }
     return `
-      <div class="phase-stat">
+      <div class="phase-stat" data-phase-idx="${i}">
         <div class="phase-dot ${cls}"></div>
         <div class="phase-info">
           <div class="phase-name">${p.name}</div>
           <div class="phase-dates">${start} → ${p.end} · ${doneDays}/${total} 天打卡</div>
         </div>
+        <span class="expand-arrow" data-phase-idx="${i}">▼</span>
         <span class="phase-tag ${tagCls}">${tagText}</span>
+      </div>
+      <div class="phase-stat-detail" id="phaseDetail${i}">
+        📊 完成率：${pct}% &nbsp;|&nbsp; 📅 剩余${remainDays}天<br>
+        📖 用书：${p.book}<br>
+        💡 ${p.tip}
       </div>`;
   }).join('');
+
+  // Phase expand click (delegated, bind once)
+  if (!phaseStats._bound) { phaseStats._bound = true;
+  phaseStats.addEventListener('click', (e) => {
+    const row = e.target.closest('.phase-stat');
+    if (!row) return;
+    const idx = row.dataset.phaseIdx;
+    const detail = document.getElementById('phaseDetail'+idx);
+    const arrow = row.querySelector('.expand-arrow');
+    detail.classList.toggle('open');
+    arrow.classList.toggle('open');
+  });
+  } // end if(!_bound)
 
   // Weekly stats (last 4 weeks)
   const weeklyStats = document.getElementById('weeklyStats');
@@ -1126,14 +1228,44 @@ function bindEvents() {
     const btn = e.target.closest('.toggle-btn');
     if (!btn) return;
     const dateStr = todayStr();
-    if (isCheckedIn(dateStr)) return; // can't change after checkin
+    if (isCheckedIn(dateStr)) return;
     document.querySelectorAll('#workdayToggle .toggle-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    // Save to checkin data
     const ci = getCheckin(dateStr) || { workdayType:'normal', tasks:{}, checkedIn:false, ts:'' };
     ci.workdayType = btn.dataset.type;
     saveCheckin(dateStr, ci.workdayType, ci.tasks, false);
+    // Update mode banner
+    const modeText = document.getElementById('modeText');
+    modeText.textContent = '工作日 · ' + (btn.dataset.type==='overtime'?'加班保底模式':'正常章节刷题');
+    document.getElementById('modeBanner').querySelector('.mode-icon').textContent = btn.dataset.type==='overtime'?'💼':'📚';
     renderToday();
+  });
+
+  // Chapter edit button
+  document.getElementById('chapterEditBtn').addEventListener('click', () => {
+    const dateStr = todayStr();
+    const weekCh = getCurrentWeekChapters(dateStr);
+    const customCh = (DATA.customChapters && DATA.customChapters[weekCh.s]) || null;
+    document.getElementById('editAcc').value = customCh ? customCh.acc : weekCh.acc;
+    document.getElementById('editTax').value = customCh ? customCh.tax : weekCh.tax;
+    document.getElementById('chapterContent').style.display = 'none';
+    document.getElementById('chapterEdit').style.display = 'block';
+  });
+  document.getElementById('saveChapter').addEventListener('click', () => {
+    const dateStr = todayStr();
+    const weekCh = getCurrentWeekChapters(dateStr);
+    if (!DATA.customChapters) DATA.customChapters = {};
+    DATA.customChapters[weekCh.s] = {
+      acc: document.getElementById('editAcc').value.trim() || weekCh.acc,
+      tax: document.getElementById('editTax').value.trim() || weekCh.tax
+    };
+    saveData(DATA);
+    renderToday();
+    showToast('✅ 本周章节已更新');
+  });
+  document.getElementById('cancelChapter').addEventListener('click', () => {
+    document.getElementById('chapterEdit').style.display = 'none';
+    document.getElementById('chapterContent').style.display = 'block';
   });
 
   // Task clicks
