@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#8DA3B8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CPA打卡">
+<link rel="manifest" href="manifest.json">
+<title>CPA备考打卡</title>
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --haze-50:  #F4F6F9;
+  --haze-100: #E6EBF1;
+  --haze-200: #CDD6E0;
+  --haze-300: #AEBFCF;
+  --haze-400: #8DA3B8;
+  --haze-500: #728BA3;
+  --haze-600: #5C7289;
+  --haze-700: #4A5D70;
+  --haze-800: #3D4D5D;
+  --haze-900: #2D3845;
+
+  --bg:        var(--haze-50);
+  --card-bg:   #FFFFFF;
+  --card-hover:#F8FAFB;
+  --border:    var(--haze-200);
+  --text:      var(--haze-800);
+  --text-dim:  var(--haze-500);
+  --text-light:var(--haze-400);
+  --primary:   var(--haze-400);
+  --primary-dk:var(--haze-600);
+  --accent:    var(--haze-500);
+
+  --success:   #7BA89C;
+  --success-bg:#EDF4F1;
+  --warn:      #C4A882;
+  --warn-bg:   #F9F4ED;
+  --danger:    #B87A7A;
+
+  --radius:    16px;
+  --radius-sm: 10px;
+  --shadow:    0 2px 12px rgba(61,77,93,0.08);
+  --shadow-lg: 0 8px 30px rgba(61,77,93,0.12);
+
+  --nav-height:64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { height:100%; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100%;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+}
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 8px);
+}
+
+/* ===== Page System ===== */
+.page { display:none; padding: 20px 16px 0; animation: fadeIn 0.25s ease; }
+.page.active { display:block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ===== Header ===== */
+.today-header { margin-bottom: 16px; }
+.date-row {
+  display:flex; align-items:baseline; justify-content:space-between;
+}
+.date-main { font-size:26px; font-weight:700; color:var(--haze-900); letter-spacing:-0.3px; }
+.date-sub  { font-size:14px; color:var(--text-dim); }
+.badges { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.badge {
+  padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600;
+  display:inline-flex; align-items:center; gap:4px;
+}
+.badge-phase { background:var(--haze-100); color:var(--haze-700); }
+.badge-streak { background:#FFF3E0; color:#E67E22; }
+.badge-weekend { background:var(--warn-bg); color:var(--warn); }
+
+/* ===== Phase Progress ===== */
+.progress-section { margin-bottom:16px; }
+.progress-label { display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:4px; }
+.progress-bar {
+  height:6px; border-radius:3px; background:var(--haze-100); overflow:hidden;
+}
+.progress-fill {
+  height:100%; border-radius:3px;
+  background: linear-gradient(90deg, var(--haze-400), var(--haze-500));
+  transition: width 0.5s ease;
+}
+
+/* ===== Card ===== */
+.card {
+  background:var(--card-bg); border-radius:var(--radius);
+  padding:16px; margin-bottom:12px;
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+}
+.card-header {
+  font-size:14px; font-weight:600; color:var(--haze-700);
+  margin-bottom:12px; display:flex; align-items:center; gap:6px;
+}
+
+/* ===== Workday Toggle ===== */
+.toggle-row {
+  display:flex; gap:8px;
+}
+.toggle-btn {
+  flex:1; padding:10px; border-radius:var(--radius-sm); border:2px solid var(--border);
+  background:var(--card-bg); font-size:14px; font-weight:500; color:var(--text-dim);
+  cursor:pointer; transition: all 0.2s;
+  text-align:center; font-family:inherit;
+}
+.toggle-btn.active {
+  border-color:var(--haze-400); background:var(--haze-50); color:var(--haze-700);
+  font-weight:600;
+}
+.toggle-btn.overtime.active {
+  border-color:var(--warn); background:var(--warn-bg); color:#8B6914;
+}
+
+/* ===== Task Cards ===== */
+.task-list { display:flex; flex-direction:column; gap:8px; }
+.task-item {
+  display:flex; align-items:center; gap:10px;
+  padding:12px 14px; border-radius:var(--radius-sm);
+  background:var(--haze-50); border:1px solid transparent;
+  transition: all 0.2s;
+}
+.task-item.done {
+  background:var(--success-bg); border-color:var(--success);
+}
+.task-icon { font-size:22px; flex-shrink:0; }
+.task-info { flex:1; min-width:0; }
+.task-name { font-size:14px; font-weight:500; color:var(--haze-800); }
+.task-target { font-size:12px; color:var(--text-dim); }
+.task-item.done .task-name { color:var(--success); }
+.task-item.done .task-target { color:var(--success); }
+
+.task-check {
+  width:28px; height:28px; border-radius:50%; border:2px solid var(--haze-300);
+  flex-shrink:0; cursor:pointer; transition:all 0.2s;
+  display:flex; align-items:center; justify-content:center;
+  background:#fff;
+}
+.task-item.done .task-check {
+  background:var(--success); border-color:var(--success);
+}
+.task-check::after {
+  content:''; display:none;
+  width:8px; height:12px; border:solid #fff; border-width:0 2px 2px 0;
+  transform:rotate(45deg); margin-top:-2px;
+}
+.task-item.done .task-check::after { display:block; }
+
+/* ===== Check-in Button ===== */
+.checkin-btn {
+  width:100%; padding:16px; border-radius:var(--radius); border:none;
+  background: linear-gradient(135deg, var(--haze-400), var(--haze-500));
+  color:#fff; font-size:17px; font-weight:700; cursor:pointer;
+  margin:16px 0; letter-spacing:0.5px;
+  box-shadow: 0 4px 16px rgba(113,139,163,0.3);
+  transition: all 0.2s;
+  font-family:inherit;
+}
+.checkin-btn:active { transform:scale(0.97); }
+.checkin-btn.done {
+  background: linear-gradient(135deg, var(--success), #6A9B8E);
+  box-shadow: 0 4px 16px rgba(123,168,156,0.3);
+}
+.checkin-btn:disabled {
+  opacity:0.5; cursor:not-allowed;
+}
+
+/* ===== Quote ===== */
+.quote {
+  text-align:center; font-size:13px; color:var(--text-light);
+  padding:8px 0 20px; font-style:italic; letter-spacing:0.5px;
+}
+
+/* ===== Calendar ===== */
+.cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.cal-month { font-size:18px; font-weight:700; color:var(--haze-900); }
+.cal-nav-btn {
+  width:36px; height:36px; border-radius:50%; border:1px solid var(--border);
+  background:#fff; font-size:18px; cursor:pointer; display:flex;
+  align-items:center; justify-content:center; color:var(--haze-600);
+}
+.cal-nav-btn:active { background:var(--haze-50); }
+
+.cal-dow { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; margin-bottom:4px; }
+.cal-dow span { font-size:12px; color:var(--text-dim); padding:6px 0; font-weight:500; }
+.cal-dow span:first-child, .cal-dow span:last-child { color:var(--danger); }
+
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.cal-cell {
+  aspect-ratio:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; border-radius:var(--radius-sm); cursor:pointer;
+  font-size:14px; color:var(--text); font-weight:500;
+  position:relative; transition:background 0.15s;
+}
+.cal-cell:active { background:var(--haze-100); }
+.cal-cell.other-month { color:var(--haze-300); }
+.cal-cell.today { background:var(--haze-100); font-weight:700; color:var(--haze-700); }
+.cal-cell.checked { }
+.cal-cell.has-checkin::after {
+  content:''; position:absolute; bottom:6px;
+  width:5px; height:5px; border-radius:50%; background:var(--success);
+}
+.cal-cell.weekend { color:var(--danger); }
+.cal-cell.weekend.other-month { color:#d4b8b8; }
+
+.cal-legend { display:flex; gap:16px; margin-top:12px; font-size:12px; color:var(--text-dim); align-items:center; }
+.cal-dot { width:8px; height:8px; border-radius:50%; background:var(--success); display:inline-block; }
+
+.cal-detail {
+  margin-top:12px; padding:14px; border-radius:var(--radius-sm);
+  background:var(--haze-50); font-size:13px; color:var(--text-dim);
+  min-height:48px; display:flex; align-items:center; justify-content:center;
+}
+
+/* ===== Stats ===== */
+.stat-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.stat-card {
+  background:#fff; border-radius:var(--radius); padding:18px 14px;
+  text-align:center; box-shadow:var(--shadow); border:1px solid var(--border);
+}
+.stat-value { font-size:36px; font-weight:800; color:var(--haze-700); letter-spacing:-1px; }
+.stat-value.streak { color:#E67E22; }
+.stat-label { font-size:12px; color:var(--text-dim); margin-top:4px; }
+
+.stat-section { margin-bottom:20px; }
+.stat-section-title { font-size:14px; font-weight:600; color:var(--haze-700); margin-bottom:10px; }
+.phase-stat {
+  display:flex; align-items:center; gap:12px; padding:12px 14px;
+  background:#fff; border-radius:var(--radius-sm); margin-bottom:6px;
+  border:1px solid var(--border);
+}
+.phase-dot {
+  width:10px; height:10px; border-radius:50%; flex-shrink:0;
+}
+.phase-dot.current { background:var(--haze-500); box-shadow:0 0 0 3px rgba(114,139,163,0.2); }
+.phase-dot.past { background:var(--success); }
+.phase-dot.future { background:var(--haze-200); }
+.phase-info { flex:1; }
+.phase-name { font-size:14px; font-weight:500; }
+.phase-dates { font-size:11px; color:var(--text-dim); }
+.phase-tag { font-size:11px; padding:3px 8px; border-radius:10px; font-weight:500; }
+.phase-tag.current { background:var(--haze-100); color:var(--haze-700); }
+.phase-tag.past { background:var(--success-bg); color:var(--success); }
+.phase-tag.future { color:var(--text-light); }
+
+.week-row {
+  display:flex; align-items:center; gap:8px; padding:8px 12px;
+  background:#fff; border-radius:var(--radius-sm); margin-bottom:4px;
+  font-size:13px; border:1px solid var(--border);
+}
+.week-bar {
+  flex:1; height:6px; border-radius:3px; background:var(--haze-100); overflow:hidden;
+}
+.week-bar-fill {
+  height:100%; border-radius:3px;
+  background:var(--success); transition:width 0.3s;
+}
+
+/* ===== Settings ===== */
+.setting-group { margin-bottom:20px; }
+.setting-group-title { font-size:12px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.setting-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; background:#fff; border-radius:var(--radius-sm);
+  margin-bottom:6px; border:1px solid var(--border);
+}
+.setting-label { font-size:14px; font-weight:500; }
+.setting-desc { font-size:11px; color:var(--text-dim); margin-top:2px; }
+.setting-row input[type="time"] {
+  border:1px solid var(--border); border-radius:8px; padding:8px 12px;
+  font-size:14px; color:var(--text); font-family:inherit;
+  background:var(--haze-50);
+}
+
+/* Toggle Switch */
+.switch {
+  width:50px; height:30px; border-radius:15px;
+  background:var(--haze-200); cursor:pointer; position:relative;
+  transition:background 0.2s; flex-shrink:0;
+}
+.switch.on { background:var(--haze-400); }
+.switch::after {
+  content:''; position:absolute; top:3px; left:3px;
+  width:24px; height:24px; border-radius:50%; background:#fff;
+  transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.15);
+}
+.switch.on::after { transform:translateX(20px); }
+
+.btn {
+  width:100%; padding:14px; border-radius:var(--radius-sm); border:1px solid var(--border);
+  background:#fff; font-size:14px; font-weight:600; cursor:pointer;
+  color:var(--text); text-align:center; font-family:inherit;
+  transition:all 0.15s; margin-bottom:8px;
+}
+.btn:active { background:var(--haze-50); }
+.btn.primary { background:var(--haze-400); color:#fff; border:none; }
+.btn.primary:active { background:var(--haze-500); }
+.btn.danger { color:var(--danger); border-color:#e8cccc; }
+.btn.danger:active { background:#fdf5f5; }
+
+/* ===== Bottom Nav ===== */
+.bottom-nav {
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:480px;
+  height:calc(var(--nav-height) + var(--safe-bottom));
+  padding-bottom:var(--safe-bottom);
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  display:flex; z-index:100;
+}
+.nav-btn {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:3px; border:none; background:none;
+  cursor:pointer; font-family:inherit;
+  font-size:10px; font-weight:500; color:var(--text-light);
+  transition:color 0.2s;
+}
+.nav-btn.active { color:var(--haze-600); font-weight:600; }
+.nav-icon { font-size:22px; }
+
+/* ===== Toast ===== */
+.toast {
+  position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-120px);
+  background:var(--haze-800); color:#fff; padding:12px 24px;
+  border-radius:24px; font-size:14px; font-weight:600;
+  z-index:200; transition:transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+  box-shadow:0 8px 30px rgba(61,77,93,0.25); pointer-events:none;
+  white-space:nowrap;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ===== Confetti (simple) ===== */
+.confetti-container {
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  pointer-events:none; z-index:150; display:none;
+}
+.confetti-container.active { display:block; }
+.confetti-piece {
+  position:absolute; width:10px; height:10px; border-radius:2px;
+  animation: confettiFall 1.5s ease-out forwards;
+}
+@keyframes confettiFall {
+  0%   { transform:translateY(-60px) rotate(0deg); opacity:1; }
+  100% { transform:translateY(105vh) rotate(720deg); opacity:0; }
+}
+
+/* ===== Responsive ===== */
+@media (min-width:480px) {
+  .app-container { border-left:1px solid var(--border); border-right:1px solid var(--border); }
+  .bottom-nav { border-left:1px solid var(--border); border-right:1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- ======================== TODAY PAGE ======================== -->
+  <main class="page active" id="page-today">
+    <header class="today-header">
+      <div class="date-row">
+        <span class="date-main" id="dateMain">5月28日 周三</span>
+        <span class="date-sub" id="dateSub"></span>
+      </div>
+      <div class="badges" id="badges"></div>
+    </header>
+
+    <div class="progress-section">
+      <div class="progress-label">
+        <span id="phaseName">阶段一 · 慢启动</span>
+        <span id="phaseDays">0/17 天</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="phaseBar" style="width:0%"></div></div>
+    </div>
+
+    <div class="card" id="workdayCard">
+      <div class="card-header">📌 今日学习模式</div>
+      <div class="toggle-row" id="workdayToggle"></div>
+    </div>
+
+    <div class="card" id="chapterCard" style="border-left:3px solid var(--haze-400);">
+      <div class="card-header">📖 本周章节</div>
+      <div id="chapterContent" style="font-size:13px;line-height:1.7;"></div>
+    </div>
+
+    <div class="card" id="taskCard">
+      <div class="card-header">📋 今日任务</div>
+      <div class="task-list" id="taskList"></div>
+    </div>
+
+    <button class="checkin-btn" id="checkinBtn" disabled>✅ 今日打卡</button>
+    <div class="quote" id="quote"></div>
+  </main>
+
+  <!-- ======================== CALENDAR PAGE ======================== -->
+  <main class="page" id="page-calendar">
+    <div class="cal-nav">
+      <button class="cal-nav-btn" id="calPrev">◀</button>
+      <span class="cal-month" id="calMonth"></span>
+      <button class="cal-nav-btn" id="calNext">▶</button>
+    </div>
+    <div class="cal-dow"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <span class="cal-dot"></span> 已打卡
+    </div>
+    <div class="cal-detail" id="calDetail">点击日期查看打卡详情</div>
+  </main>
+
+  <!-- ======================== STATS PAGE ======================== -->
+  <main class="page" id="page-stats">
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="stat-value streak" id="statStreak">0</div>
+        <div class="stat-label">🔥 当前连续</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statBest">0</div>
+        <div class="stat-label">⭐ 最长连续</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">📅 累计打卡</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statRemain">87</div>
+        <div class="stat-label">📆 距考试</div>
+      </div>
+    </div>
+
+    <div class="stat-section">
+      <div class="stat-section-title">📊 各阶段进度</div>
+      <div id="phaseStats"></div>
+    </div>
+
+    <div class="stat-section">
+      <div class="stat-section-title">📈 近4周完成率</div>
+      <div id="weeklyStats"></div>
+    </div>
+  </main>
+
+  <!-- ======================== SETTINGS PAGE ======================== -->
+  <main class="page" id="page-settings">
+    <div class="setting-group">
+      <div class="setting-group-title">提醒设置</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">每日提醒</div>
+          <div class="setting-desc">到时间未打卡时发送通知</div>
+        </div>
+        <div class="switch on" id="notifyToggle"></div>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">提醒时间</div>
+          <div class="setting-desc">建议设为早上或午休时间</div>
+        </div>
+        <input type="time" id="reminderTime" value="08:00">
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-group-title">默认模式</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">默认工作日模式</div>
+          <div class="setting-desc">每天首次打开时的默认选择</div>
+        </div>
+        <div class="toggle-row" style="width:140px; flex-shrink:0;" id="defaultModeToggle"></div>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-group-title">数据</div>
+      <button class="btn primary" id="exportICS">📅 导出学习计划到手机日历</button>
+      <button class="btn" id="installApp" style="display:none;">📲 添加到主屏幕</button>
+      <button class="btn danger" id="resetData">🗑 清除所有打卡数据</button>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-group-title">关于</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">CPA 会计+税法 2026备考</div>
+          <div class="setting-desc">5月28日 – 8月22日 · 共87天</div>
+        </div>
+      </div>
+    </div>
+    <div style="height:20px;"></div>
+  </main>
+
+  <!-- ======================== Bottom Nav ======================== -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="today">
+      <span class="nav-icon">📋</span>今日
+    </button>
+    <button class="nav-btn" data-page="calendar">
+      <span class="nav-icon">📅</span>日历
+    </button>
+    <button class="nav-btn" data-page="stats">
+      <span class="nav-icon">📊</span>统计
+    </button>
+    <button class="nav-btn" data-page="settings">
+      <span class="nav-icon">⚙️</span>设置
+    </button>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+  <div class="confetti-container" id="confetti"></div>
+</div>
+
+<script>
+/* =================================================================
+   CPA Study Tracker — Complete Application Logic
+   ================================================================= */
+
+// ── CONFIG ──────────────────────────────────────────────────────
+const EXAM_DATE = new Date(2026,7,23); // Aug 23, 2026
+const START_DATE = '2026-05-28';
+
+const PHASES = [
+  { name:'阶段一 · 慢启动', end:'2026-06-13', book:'东奥轻二（只做好题）', tip:'先做章节练习，不追求正确率，错题全部标记',
+    normal:[
+      {id:'accObj', icon:'📝', label:'会计客观题', n:15, detail:'单选+多选 · 轻二章节练习', time:'~30min'},
+      {id:'accSub', icon:'📐', label:'会计主观题', n:2, detail:'计算分析题 · 轻二本章对应', time:'~40min'},
+      {id:'taxObj', icon:'📋', label:'税法客观题', n:12, detail:'单选+多选 · 轻二章节练习', time:'~20min'},
+      {id:'taxSub', icon:'🧮', label:'税法主观题', n:1, detail:'计算问答 · 轻二本章对应', time:'~40min'}
+    ], overtime:[
+      {id:'accObj', icon:'📝', label:'会计客观题', n:10, detail:'单选+多选 · 轻二章节练习', time:'~20min'},
+      {id:'taxObj', icon:'📋', label:'税法客观题', n:8, detail:'单选+多选 · 轻二章节练习', time:'~15min'}
+  ]},
+  { name:'阶段二 · 爬坡上量', end:'2026-07-11', book:'东奥轻二（只做好题）', tip:'税法必须动笔算，坑全在计算细节里，周末加套卷',
+    normal:[
+      {id:'accObj', icon:'📝', label:'会计客观题', n:25, detail:'单选+多选 · 轻二重点章节', time:'~35min'},
+      {id:'accSub', icon:'📐', label:'会计主观题', n:3, detail:'计算+综合 · 轻二重点章节', time:'~40min'},
+      {id:'taxObj', icon:'📋', label:'税法客观题', n:20, detail:'单选+多选 · 轻二重点章节', time:'~25min'},
+      {id:'taxSub', icon:'🧮', label:'税法主观题', n:2, detail:'计算问答 · 轻二重点章节', time:'~40min'}
+    ], overtime:[
+      {id:'accObj', icon:'📝', label:'会计客观题', n:12, detail:'单选+多选 · 轻二章节练习', time:'~20min'},
+      {id:'taxObj', icon:'📋', label:'税法客观题', n:10, detail:'单选+多选 · 轻二章节练习', time:'~15min'}
+  ]},
+  { name:'阶段三 · 真题轰炸', end:'2026-08-08', book:'近5年真题汇编 + 轻四最后六套题', tip:'真题逐题复盘，同考点连错两次→回去看教材原文',
+    normal:[
+      {id:'accObj', icon:'📝', label:'会计客观题', n:30, detail:'真题+轻四 · 限时训练', time:'~35min'},
+      {id:'accSub', icon:'📐', label:'会计主观题', n:4, detail:'计算+综合 · 真题为主', time:'~50min'},
+      {id:'taxObj', icon:'📋', label:'税法客观题', n:25, detail:'真题+轻四 · 限时训练', time:'~30min'},
+      {id:'taxSub', icon:'🧮', label:'税法主观题', n:3, detail:'计算问答 · 真题为主', time:'~30min'}
+    ], overtime:[
+      {id:'accObj', icon:'📝', label:'会计客观题', n:15, detail:'单选+多选 · 真题/轻四', time:'~20min'},
+      {id:'accSub', icon:'📐', label:'会计主观题', n:1, detail:'综合题 · 真题', time:'~20min'},
+      {id:'taxObj', icon:'📋', label:'税法客观题', n:12, detail:'单选+多选 · 真题/轻四', time:'~15min'}
+  ]},
+  { name:'阶段四 · 保温冲刺', end:'2026-08-22', book:'错题本 + 笔记 + 分录/公式清单', tip:'不再刷新题，回顾错题才是涨分，保持手感即可',
+    normal:[
+      {id:'accReview', icon:'🔄', label:'会计错题回顾', n:15, detail:'翻阅错题本+重做标记题', time:'~30min'},
+      {id:'taxReview', icon:'🔄', label:'税法错题回顾', n:10, detail:'翻阅错题本+重做标记题', time:'~20min'},
+      {id:'accMem', icon:'✍️', label:'会计分录默写', n:3, detail:'长投合并/收入/租赁核心分录', time:'~15min'},
+      {id:'taxMem', icon:'🧠', label:'税收口诀默背', n:1, detail:'增值税/企税/个税优惠口诀', time:'~10min'}
+    ], overtime:[
+      {id:'accReview', icon:'🔄', label:'会计错题回顾', n:10, detail:'翻阅错题本', time:'~15min'},
+      {id:'taxReview', icon:'🔄', label:'税法错题回顾', n:5, detail:'翻阅错题本', time:'~10min'}
+  ]}
+];
+
+const MOTIVATIONS = [
+  '断一天毁一周，坚持就是胜利 ✨',
+  '错题是你的分数池，消灭错题就是涨分 📈',
+  '宁可少做5题，也要把错题看完再过夜 💪',
+  '连续性是二战人最大的武器 🔥',
+  '你已经有基础了，今年是收割的一年 🌾',
+  '加班日也要碰书——维持"我在备考"的心理锚点 ⚓',
+  '周六套卷是底线，雷打不动 📄',
+  '每天30题，87天就是2600题积累 🏔️',
+];
+
+const QUOTES_BY_PHASE = [
+  ['慢就是快，建立节奏最重要 🌱','先做章节练习，不追求正确率 📖','会计四大金刚：长投合并、收入、金融工具、租赁 ⚔️'],
+  ['税法必须动笔算，坑全在计算细节里 🧮','每周末一套综合测试，严格计时 ⏱️','连续不断——哪怕只做10题也比断一天强 💯'],
+  ['真题逐题复盘，不是对完答案就过 🔍','同一考点连错两次，回去看教材原文 📚','全真模拟：不能看手机，严格计时 🎯'],
+  ['不再刷新题，只看错题本和笔记 📓','每天保持手感，15-20题即可 🤲','考前焦虑别乱刷题——回顾错题才是涨分 🧘']
+];
+
+const WEEKLY_CHAPTERS = [
+  { s:'2026-05-28', e:'2026-05-31',
+    acc:'第1-4章：总论→存货→固资→无形资产',
+    tax:'第1章 税法总论 + 第6章 城建税/烟叶税' },
+  { s:'2026-06-01', e:'2026-06-07',
+    acc:'第5章 投资性房地产 + 第7章 资产减值',
+    tax:'第3章 消费税' },
+  { s:'2026-06-08', e:'2026-06-13',
+    acc:'第9章 职工薪酬 + 第17章 政府补助',
+    tax:'第7章 关税 + 第9章 土地使用税/耕地占用税' },
+  { s:'2026-06-14', e:'2026-06-20',
+    acc:'⭐ 第16章 收入（重点）',
+    tax:'⭐ 第2章 增值税（上）' },
+  { s:'2026-06-21', e:'2026-06-27',
+    acc:'⭐ 第13章 金融工具',
+    tax:'⭐ 第2章 增值税（下）+ 第8章 资源税/环保税' },
+  { s:'2026-06-28', e:'2026-07-04',
+    acc:'⭐ 第6章 长期股权投资',
+    tax:'⭐ 第4章 企业所得税（上）' },
+  { s:'2026-07-05', e:'2026-07-11',
+    acc:'⭐ 第14章 租赁 + 第10章 股份支付',
+    tax:'⭐ 第4章 企业所得税（下）+ 第5章 个人所得税（上）' },
+  { s:'2026-07-12', e:'2026-07-18',
+    acc:'⭐ 第19章 所得税 + 第27章 合并报表（上）',
+    tax:'⭐ 第5章 个人所得税（下）+ 第10章 房产税/契税/土增税' },
+  { s:'2026-07-19', e:'2026-07-25',
+    acc:'⭐ 第27章 合并报表（下）+ 第20章 非货币交换 + 第21章 债务重组',
+    tax:'第12章 国际税收' },
+  { s:'2026-07-26', e:'2026-08-01',
+    acc:'第24章 会计政策变更 + 第25章 日后事项 + 第28章 每股收益',
+    tax:'剩余小税种收尾（第11章 车购税/车船税/印花税）' },
+  { s:'2026-08-02', e:'2026-08-08',
+    acc:'第23章 财务报告 + 全部剩余章节扫尾',
+    tax:'第13章 税收征管法 + 第14章 税务行政法制' },
+  { s:'2026-08-09', e:'2026-08-22',
+    acc:'🔁 错题回顾 + 分录模板默写（不刷新题）',
+    tax:'🔁 错题回顾 + 税收优惠口诀默背（不刷新题）' }
+];
+
+// ── HELPERS ────────────────────────────────────────────────────
+function fmtDate(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function todayStr() { return fmtDate(new Date()); }
+function parseDate(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function daysBetween(a,b) { return Math.round((parseDate(b)-parseDate(a))/(86400000)); }
+function dayOfWeek(s) { return parseDate(s).getDay(); } // 0=Sun
+function isWeekend(s) { const d=dayOfWeek(s); return d===0||d===6; }
+
+function getCurrentWeekChapters(dateStr) {
+  for (let i=WEEKLY_CHAPTERS.length-1; i>=0; i--) {
+    if (dateStr >= WEEKLY_CHAPTERS[i].s) return WEEKLY_CHAPTERS[i];
+  }
+  return WEEKLY_CHAPTERS[0];
+}
+
+function getPhase(dateStr) {
+  for (let i=0; i<PHASES.length; i++) {
+    if (dateStr <= PHASES[i].end) return i;
+  }
+  return PHASES.length-1;
+}
+
+function getTasksForDay(dateStr, workdayType) {
+  if (dateStr < START_DATE || dateStr > PHASES[3].end) return [];
+  if (isWeekend(dateStr)) {
+    const d = dayOfWeek(dateStr);
+    const phaseIdx = getPhase(dateStr);
+    const mockBook = phaseIdx >= 2 ? '轻四最后六套题' : '轻一章末综合测试';
+    return d===6 ? [
+      {id:'mockAcc', icon:'📄', label:'会计全真套卷', n:1, detail:'严格计时3小时 · '+mockBook, time:'3h'},
+      {id:'mockReview', icon:'🔍', label:'套卷逐题复盘', n:1, detail:'纠错时间≥考试时间 · 逐题分析', time:'≥3h'}
+    ] : [
+      {id:'mockTax', icon:'📄', label:'税法全真套卷', n:1, detail:'严格计时2小时 · '+mockBook, time:'2h'},
+      {id:'mockReview', icon:'🔍', label:'套卷逐题复盘', n:1, detail:'纠错时间≥考试时间 · 逐题分析', time:'≥2h'}
+    ];
+  }
+  const p = PHASES[getPhase(dateStr)];
+  return workdayType==='overtime' ? p.overtime : p.normal;
+}
+
+function weekLabel(dateStr) {
+  const d = parseDate(dateStr);
+  const start = new Date(d);
+  start.setDate(d.getDate()-d.getDay());
+  const end = new Date(start);
+  end.setDate(start.getDate()+6);
+  return fmtDate(start)+' ~ '+fmtDate(end);
+}
+
+// ── STATE ──────────────────────────────────────────────────────
+const STORAGE_KEY = 'cpa_study_data';
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return {
+    checkins: {},        // { '2026-05-28': { workdayType:'normal', tasks:{accObj:true,...}, checkedIn:true, ts:'...' } }
+    settings: { reminderEnabled:true, reminderTime:'08:00', defaultMode:'normal' },
+    checkedInDates: []   // sorted array of 'YYYY-MM-DD'
+  };
+}
+function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+
+let DATA = loadData();
+
+function saveCheckin(dateStr, workdayType, tasksDone, checkedIn) {
+  DATA.checkins[dateStr] = {
+    workdayType,
+    tasks: tasksDone, // { taskId: true/false }
+    checkedIn,
+    ts: new Date().toISOString()
+  };
+  if (checkedIn && !DATA.checkedInDates.includes(dateStr)) {
+    DATA.checkedInDates.push(dateStr);
+    DATA.checkedInDates.sort();
+  }
+  saveData(DATA);
+}
+
+function getCheckin(dateStr) { return DATA.checkins[dateStr] || null; }
+function isCheckedIn(dateStr) {
+  const c = DATA.checkins[dateStr];
+  return c && c.checkedIn;
+}
+
+function getSettings() {
+  return DATA.settings || { reminderEnabled:true, reminderTime:'08:00', defaultMode:'normal' };
+}
+function saveSettings(s) { DATA.settings = s; saveData(DATA); }
+
+function calcStreak() {
+  let streak = 0;
+  const d = new Date();
+  // Check from yesterday backwards in case user hasn't checked in today yet
+  // Actually, check from today backwards
+  const check = new Date(d);
+  // Go back from today, count consecutive checked-in days
+  // But first, if today isn't checked in, start from yesterday
+  if (!isCheckedIn(fmtDate(check))) {
+    check.setDate(check.getDate()-1);
+  }
+  while (true) {
+    const s = fmtDate(check);
+    if (s < START_DATE) break;
+    // Weekends in the future count, but for past days only count if checked in
+    if (isCheckedIn(s)) {
+      streak++;
+    } else {
+      break;
+    }
+    check.setDate(check.getDate()-1);
+  }
+  return streak;
+}
+
+function calcBestStreak() {
+  let best=0, cur=0;
+  const start = parseDate(START_DATE);
+  const end = new Date();
+  for (let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) {
+    const s = fmtDate(d);
+    if (isCheckedIn(s)) { cur++; if (cur>best) best=cur; }
+    else { cur=0; }
+  }
+  return best;
+}
+
+// ── TOAST ──────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── CONFETTI ───────────────────────────────────────────────────
+function spawnConfetti() {
+  const container = document.getElementById('confetti');
+  container.innerHTML = '';
+  container.classList.add('active');
+  const colors = ['#8DA3B8','#7BA89C','#C4A882','#B87A7A','#AEBFCF','#728BA3','#E6A86E','#CDD6E0'];
+  const frag = document.createDocumentFragment();
+  for (let i=0; i<40; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random()*100+'%';
+    p.style.top = -(Math.random()*40)+'px';
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    p.style.animationDelay = Math.random()*0.6+'s';
+    p.style.animationDuration = (1.2+Math.random()*1.2)+'s';
+    p.style.width = (6+Math.random()*8)+'px';
+    p.style.height = (6+Math.random()*8)+'px';
+    frag.appendChild(p);
+  }
+  container.appendChild(frag);
+  setTimeout(() => { container.innerHTML=''; container.classList.remove('active'); }, 2500);
+}
+
+// ── RENDER: TODAY PAGE ─────────────────────────────────────────
+function renderToday() {
+  const dateStr = todayStr();
+  const d = parseDate(dateStr);
+  const weekNames = ['日','一','二','三','四','五','六'];
+  const dateMain = document.getElementById('dateMain');
+  dateMain.textContent = (d.getMonth()+1)+'月'+d.getDate()+'日 周'+weekNames[d.getDay()];
+
+  // Date sub (days remaining)
+  const remain = daysBetween(dateStr, fmtDate(EXAM_DATE));
+  document.getElementById('dateSub').textContent = '距考试 '+remain+' 天';
+
+  // Badges
+  const badgesEl = document.getElementById('badges');
+  const phase = getPhase(dateStr);
+  let badgeHTML = '<span class="badge badge-phase">'+PHASES[phase].name+'</span>';
+
+  if (isWeekend(dateStr)) {
+    const dow = dayOfWeek(dateStr);
+    badgeHTML += '<span class="badge badge-weekend">'+ (dow===6?'周六 · 会计套卷':'周日 · 税法套卷') +'</span>';
+  }
+
+  const streak = calcStreak();
+  if (streak>0) badgeHTML += '<span class="badge badge-streak">🔥 连续'+streak+'天</span>';
+
+  // If already checked in today
+  if (isCheckedIn(dateStr)) {
+    badgeHTML += '<span class="badge" style="background:#EDF4F1;color:#7BA89C;">✅ 已打卡</span>';
+  }
+  badgesEl.innerHTML = badgeHTML;
+
+  // Phase progress
+  document.getElementById('phaseName').textContent = PHASES[phase].name;
+  const phaseStart = phase===0 ? START_DATE : PHASES[phase-1].end;
+  const phaseTotal = daysBetween(phaseStart, PHASES[phase].end)+1;
+  const phaseDone = daysBetween(phaseStart, dateStr)+1;
+  const phaseDoneClamped = Math.min(phaseDone, phaseTotal);
+  document.getElementById('phaseDays').textContent = phaseDoneClamped+'/'+phaseTotal+' 天';
+  document.getElementById('phaseBar').style.width = (phaseDoneClamped/phaseTotal*100)+'%';
+
+  // Weekly chapters
+  const weekCh = getCurrentWeekChapters(dateStr);
+  const phaseInfo = PHASES[phase];
+  document.getElementById('chapterContent').innerHTML = `
+    <div style="margin-bottom:6px;"><span style="color:var(--haze-600);font-weight:600;">会计：</span>${weekCh.acc}</div>
+    <div style="margin-bottom:6px;"><span style="color:var(--haze-600);font-weight:600;">税法：</span>${weekCh.tax}</div>
+    <div style="font-size:11px;color:var(--text-light);">📅 ${weekCh.s} → ${weekCh.e} &nbsp;|&nbsp; 📖 ${phaseInfo.book}</div>
+    <div style="font-size:11px;color:var(--haze-500);margin-top:3px;">💡 ${phaseInfo.tip}</div>
+  `;
+
+  // Workday toggle (only for non-weekend, non-phase4)
+  const workdayCard = document.getElementById('workdayCard');
+  const taskCard = document.getElementById('taskCard');
+  const checkinBtn = document.getElementById('checkinBtn');
+
+  if (isWeekend(dateStr)) {
+    workdayCard.style.display = 'none';
+  } else {
+    workdayCard.style.display = 'block';
+    const existing = getCheckin(dateStr);
+    const currentType = existing ? existing.workdayType : getSettings().defaultMode;
+    const toggle = document.getElementById('workdayToggle');
+    toggle.innerHTML = `
+      <button class="toggle-btn ${currentType==='normal'?'active':''}" data-type="normal">📚 不加班 (${PHASES[phase].normal.reduce((s,t)=>s+t.n,0)}题)</button>
+      <button class="toggle-btn overtime ${currentType==='overtime'?'active':''}" data-type="overtime">💼 加班 (${PHASES[phase].overtime.reduce((s,t)=>s+t.n,0)}题)</button>
+    `;
+  }
+
+  // Tasks
+  const existing = getCheckin(dateStr);
+  let workdayType, tasksDone;
+  if (existing) {
+    workdayType = existing.workdayType;
+    tasksDone = existing.tasks;
+  } else {
+    workdayType = getSettings().defaultMode;
+    tasksDone = {};
+  }
+  if (isWeekend(dateStr)) workdayType = 'weekend';
+
+  const tasks = getTasksForDay(dateStr, workdayType);
+  const allDone = tasks.length>0 && tasks.every(t => tasksDone[t.id]);
+
+  const taskList = document.getElementById('taskList');
+  taskList.innerHTML = tasks.map(t => {
+    const done = !!tasksDone[t.id];
+    const sub = t.detail || t.note || ('目标 '+t.n+' 题');
+    const time = t.time || '';
+    return `
+      <div class="task-item${done?' done':''}" data-task-id="${t.id}">
+        <span class="task-icon">${t.icon}</span>
+        <div class="task-info">
+          <div class="task-name">${t.label} <span style="font-weight:400;font-size:13px;color:var(--haze-500);">${t.n}题/${t.n}个</span></div>
+          <div class="task-target">${sub}${time?' · ⏱ '+time:''}</div>
+        </div>
+        <div class="task-check"></div>
+      </div>`;
+  }).join('');
+
+  // Check-in button
+  checkinBtn.textContent = isCheckedIn(dateStr) ? '✅ 已完成打卡' : '✅ 今日打卡';
+  checkinBtn.className = 'checkin-btn' + (isCheckedIn(dateStr)?' done':'');
+  checkinBtn.disabled = !allDone && !isCheckedIn(dateStr);
+
+  // Quote
+  const quotes = QUOTES_BY_PHASE[phase];
+  document.getElementById('quote').textContent = quotes[Math.floor(Math.random()*quotes.length)];
+}
+
+// ── RENDER: CALENDAR PAGE ──────────────────────────────────────
+let calYear, calMonth; // 0-indexed month
+
+function renderCalendar(year, month) {
+  calYear = year; calMonth = month;
+  document.getElementById('calMonth').textContent = year+'年'+(month+1)+'月';
+
+  const grid = document.getElementById('calGrid');
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const today = todayStr();
+
+  let html = '';
+  for (let i=0; i<firstDay; i++) html += '<div class="cal-cell other-month"></div>';
+  for (let d=1; d<=daysInMonth; d++) {
+    const ds = year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const checked = isCheckedIn(ds);
+    const isToday = ds===today;
+    const weekend = dayOfWeek(ds)===0||dayOfWeek(ds)===6;
+    let cls = 'cal-cell';
+    if (isToday) cls += ' today';
+    if (checked) cls += ' has-checkin';
+    if (weekend) cls += ' weekend';
+    html += `<div class="${cls}" data-date="${ds}">${d}</div>`;
+  }
+  grid.innerHTML = html;
+
+  document.getElementById('calDetail').textContent = '点击日期查看打卡详情';
+}
+
+function renderTodayCalendar() {
+  const now = new Date();
+  renderCalendar(now.getFullYear(), now.getMonth());
+}
+
+// ── RENDER: STATS PAGE ─────────────────────────────────────────
+function renderStats() {
+  document.getElementById('statStreak').textContent = calcStreak();
+  document.getElementById('statBest').textContent = calcBestStreak();
+  document.getElementById('statTotal').textContent = DATA.checkedInDates.length;
+  document.getElementById('statRemain').textContent = daysBetween(todayStr(), fmtDate(EXAM_DATE));
+
+  // Phase stats
+  const phaseStats = document.getElementById('phaseStats');
+  const now = todayStr();
+  phaseStats.innerHTML = PHASES.map((p,i) => {
+    const start = i===0 ? START_DATE : PHASES[i-1].end;
+    const total = daysBetween(start, p.end)+1;
+    const doneDays = DATA.checkedInDates.filter(ds => ds>=start && ds<=p.end).length;
+    const isCurrent = now <= p.end && now >= start;
+    const isPast = now > p.end;
+    let cls, tagCls, tagText;
+    if (isCurrent) { cls='current'; tagCls='current'; tagText='进行中'; }
+    else if (isPast) { cls='past'; tagCls='past'; tagText='已完成'; }
+    else { cls='future'; tagCls='future'; tagText='未开始'; }
+    return `
+      <div class="phase-stat">
+        <div class="phase-dot ${cls}"></div>
+        <div class="phase-info">
+          <div class="phase-name">${p.name}</div>
+          <div class="phase-dates">${start} → ${p.end} · ${doneDays}/${total} 天打卡</div>
+        </div>
+        <span class="phase-tag ${tagCls}">${tagText}</span>
+      </div>`;
+  }).join('');
+
+  // Weekly stats (last 4 weeks)
+  const weeklyStats = document.getElementById('weeklyStats');
+  const weeks = [];
+  const end = new Date();
+  for (let i=3; i>=0; i--) {
+    const wEnd = new Date(end);
+    wEnd.setDate(end.getDate()-i*7);
+    const wStart = new Date(wEnd);
+    wStart.setDate(wEnd.getDate()-6);
+    const days = DATA.checkedInDates.filter(ds => ds>=fmtDate(wStart) && ds<=fmtDate(wEnd)).length;
+    weeks.push({ label:fmtDate(wStart)+' ~ '+fmtDate(wEnd), done:days, total:7, pct:Math.round(days/7*100) });
+  }
+  weeklyStats.innerHTML = weeks.map(w => `
+    <div class="week-row">
+      <span style="font-size:12px;width:140px;flex-shrink:0;color:var(--text-dim);">${w.label.slice(5)}</span>
+      <div class="week-bar"><div class="week-bar-fill" style="width:${w.pct}%"></div></div>
+      <span style="font-size:12px;font-weight:600;width:40px;text-align:right;">${w.done}/7</span>
+    </div>
+  `).join('');
+}
+
+// ── RENDER: SETTINGS PAGE ──────────────────────────────────────
+function renderSettings() {
+  const s = getSettings();
+  const notifyToggle = document.getElementById('notifyToggle');
+  if (s.reminderEnabled) notifyToggle.classList.add('on'); else notifyToggle.classList.remove('on');
+  document.getElementById('reminderTime').value = s.reminderTime;
+
+  const modeToggle = document.getElementById('defaultModeToggle');
+  modeToggle.innerHTML = `
+    <button class="toggle-btn ${s.defaultMode==='normal'?'active':''}" data-default="normal" style="font-size:12px;">📚 不加班</button>
+    <button class="toggle-btn overtime ${s.defaultMode==='overtime'?'active':''}" data-default="overtime" style="font-size:12px;">💼 加班</button>
+  `;
+}
+
+// ── ICS EXPORT ─────────────────────────────────────────────────
+function generateICS() {
+  const s = getSettings();
+  const [h,m] = s.reminderTime.split(':').map(Number);
+  let ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//CPA Study Tracker//CN',
+    'X-WR-CALNAME:CPA备考计划',
+    'X-WR-CALDESC:2026 CPA会计+税法备考每日学习计划'
+  ];
+
+  const start = new Date(Math.max(parseDate(START_DATE), new Date()));
+  start.setHours(0,0,0,0);
+  const end = parseDate(PHASES[3].end);
+
+  for (let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) {
+    const ds = fmtDate(d);
+    const dow = dayOfWeek(ds);
+    const tasks = getTasksForDay(ds, 'normal');
+    if (tasks.length===0) continue;
+    const summary = (isWeekend(ds) ? (dow===6?'🧮 ':'📊 ') : '📖 ') + 'CPA - '+
+      tasks.map(t=>t.label+(t.note?('('+t.note+')'):(' '+t.n+'题'))).join(' / ');
+    const dt = new Date(d);
+    dt.setHours(h, m, 0);
+    const dtEnd = new Date(dt);
+    dtEnd.setMinutes(dt.getMinutes()+30);
+
+    const fmtDT = (dt) => dt.getFullYear()+String(dt.getMonth()+1).padStart(2,'0')+String(dt.getDate()).padStart(2,'0')+'T'+String(dt.getHours()).padStart(2,'0')+String(dt.getMinutes()).padStart(2,'0')+'00';
+
+    ics.push(
+      'BEGIN:VEVENT',
+      'DTSTART:'+fmtDT(dt),
+      'DTEND:'+fmtDT(dtEnd),
+      'SUMMARY:'+summary,
+      'DESCRIPTION:'+tasks.map(t=>'• '+t.label+(t.note?('('+t.note+')'):(' - '+t.n+'题'))).join('\\n'),
+      'BEGIN:VALARM',
+      'TRIGGER:-PT15M',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:📖 CPA学习时间到！打开CPA备考打卡App开始今天的学习吧。',
+      'END:VALARM',
+      'END:VEVENT'
+    );
+  }
+  ics.push('END:VCALENDAR');
+  return ics.join('\r\n');
+}
+
+function downloadICS() {
+  const ics = generateICS();
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'CPA备考计划_2026.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📅 日历文件已下载，请在手机日历中导入');
+}
+
+// ── NOTIFICATIONS ──────────────────────────────────────────────
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission==='default') {
+    Notification.requestPermission();
+  }
+}
+
+function checkReminder() {
+  const s = getSettings();
+  if (!s.reminderEnabled) return;
+  const now = new Date();
+  const [h,m] = s.reminderTime.split(':').map(Number);
+  if (now.getHours()===h && now.getMinutes()===m && !isCheckedIn(todayStr())) {
+    if ('Notification' in window && Notification.permission==='granted') {
+      new Notification('📖 CPA学习时间到！', {
+        body: '今天还没有打卡哦，打开App开始学习吧。',
+        icon: 'icon.svg',
+        tag: 'cpa-reminder'
+      });
+    }
+  }
+}
+
+// ── PAGE NAVIGATION ────────────────────────────────────────────
+function switchPage(pageName) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+pageName).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.nav-btn[data-page="'+pageName+'"]').classList.add('active');
+
+  if (pageName==='calendar') renderTodayCalendar();
+  if (pageName==='stats') renderStats();
+  if (pageName==='settings') renderSettings();
+}
+
+// ── EVENT BINDINGS ─────────────────────────────────────────────
+function bindEvents() {
+  // Bottom nav
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchPage(btn.dataset.page));
+  });
+
+  // Workday toggle
+  document.getElementById('workdayToggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('.toggle-btn');
+    if (!btn) return;
+    const dateStr = todayStr();
+    if (isCheckedIn(dateStr)) return; // can't change after checkin
+    document.querySelectorAll('#workdayToggle .toggle-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    // Save to checkin data
+    const ci = getCheckin(dateStr) || { workdayType:'normal', tasks:{}, checkedIn:false, ts:'' };
+    ci.workdayType = btn.dataset.type;
+    saveCheckin(dateStr, ci.workdayType, ci.tasks, false);
+    renderToday();
+  });
+
+  // Task clicks
+  document.getElementById('taskList').addEventListener('click', (e) => {
+    const item = e.target.closest('.task-item');
+    if (!item) return;
+    const dateStr = todayStr();
+    if (isCheckedIn(dateStr)) return;
+    const taskId = item.dataset.taskId;
+    const ci = getCheckin(dateStr) || { workdayType:getSettings().defaultMode, tasks:{}, checkedIn:false, ts:'' };
+    if (isWeekend(dateStr)) ci.workdayType = 'weekend';
+    ci.tasks[taskId] = !ci.tasks[taskId];
+    saveCheckin(dateStr, ci.workdayType, ci.tasks, false);
+    renderToday();
+  });
+
+  // Checkin button
+  document.getElementById('checkinBtn').addEventListener('click', () => {
+    const dateStr = todayStr();
+    if (isCheckedIn(dateStr)) return;
+    const tasks = getTasksForDay(dateStr, getCheckin(dateStr)?.workdayType||'normal');
+    const tasksDone = (getCheckin(dateStr)?.tasks)||{};
+    const allDone = tasks.every(t=>tasksDone[t.id]);
+    if (!allDone) return;
+
+    const ci = getCheckin(dateStr) || { workdayType:getSettings().defaultMode };
+    if (isWeekend(dateStr)) ci.workdayType = 'weekend';
+    saveCheckin(dateStr, ci.workdayType, ci.tasks||tasksDone, true);
+    spawnConfetti();
+    const streak = calcStreak();
+    showToast('🎉 打卡成功！连续 '+streak+' 天');
+    renderToday();
+  });
+
+  // Calendar navigation
+  document.getElementById('calPrev').addEventListener('click', () => {
+    if (calMonth===0) renderCalendar(calYear-1, 11);
+    else renderCalendar(calYear, calMonth-1);
+  });
+  document.getElementById('calNext').addEventListener('click', () => {
+    if (calMonth===11) renderCalendar(calYear+1, 0);
+    else renderCalendar(calYear, calMonth+1);
+  });
+
+  // Calendar day click
+  document.getElementById('calGrid').addEventListener('click', (e) => {
+    const cell = e.target.closest('.cal-cell');
+    if (!cell || !cell.dataset.date) return;
+    const ds = cell.dataset.date;
+    const ci = getCheckin(ds);
+    if (!ci || !ci.checkedIn) {
+      document.getElementById('calDetail').textContent = ds+' · 未打卡';
+      return;
+    }
+    const tasks = getTasksForDay(ds, ci.workdayType);
+    const doneNames = tasks.filter(t=>ci.tasks[t.id]).map(t=>t.label);
+    document.getElementById('calDetail').innerHTML = '<b>'+ds+'</b> · '+
+      (ci.workdayType==='weekend'?'周末套卷':(ci.workdayType==='overtime'?'加班模式':'正常模式'))+
+      '<br>已完成：'+(doneNames.length>0?doneNames.join('、'):'无')+
+      '<br><span style="font-size:11px;color:var(--text-light)">打卡时间：'+new Date(ci.ts).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+'</span>';
+  });
+
+  // Settings: notification toggle
+  document.getElementById('notifyToggle').addEventListener('click', function() {
+    const s = getSettings();
+    s.reminderEnabled = !s.reminderEnabled;
+    saveSettings(s);
+    this.classList.toggle('on');
+    if (s.reminderEnabled) requestNotificationPermission();
+    showToast(s.reminderEnabled?'🔔 提醒已开启':'🔕 提醒已关闭');
+  });
+
+  // Settings: reminder time
+  document.getElementById('reminderTime').addEventListener('change', function() {
+    const s = getSettings();
+    s.reminderTime = this.value;
+    saveSettings(s);
+  });
+
+  // Settings: default mode
+  document.getElementById('defaultModeToggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('.toggle-btn');
+    if (!btn) return;
+    const s = getSettings();
+    s.defaultMode = btn.dataset.default;
+    saveSettings(s);
+    renderSettings();
+  });
+
+  // Settings: ICS export
+  document.getElementById('exportICS').addEventListener('click', downloadICS);
+
+  // Settings: install app
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    window._deferredPrompt = e;
+    document.getElementById('installApp').style.display = 'block';
+    document.getElementById('installApp').addEventListener('click', () => {
+      window._deferredPrompt.prompt();
+      window._deferredPrompt.userChoice.then(() => {
+        document.getElementById('installApp').style.display = 'none';
+      });
+    });
+  });
+
+  // Settings: reset data
+  document.getElementById('resetData').addEventListener('click', () => {
+    if (confirm('确定要清除所有打卡数据吗？此操作不可恢复。')) {
+      localStorage.removeItem(STORAGE_KEY);
+      DATA = loadData();
+      renderToday();
+      showToast('数据已清除');
+    }
+  });
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+function init() {
+  bindEvents();
+  renderToday();
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+
+  // Request notification permission on first interaction
+  setTimeout(requestNotificationPermission, 3000);
+
+  // Check reminder every minute
+  setInterval(checkReminder, 60000);
+  // Also check on load
+  setTimeout(checkReminder, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "CPA备考打卡",
+  "short_name": "CPA打卡",
+  "description": "2026 CPA会计+税法备考每日打卡追踪",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F6F9",
+  "theme_color": "#8DA3B8",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
